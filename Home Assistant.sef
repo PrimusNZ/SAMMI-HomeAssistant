@@ -1,12 +1,11 @@
 [extension_name]
 Home Assistant
 [extension_info]
-Allows SAMMI to interface with Home Assistant to run scripts, turn switches and lights on or off, or trigger scenes and scripts.
+Allows SAMMI to interface with Home Assistant to turn switches and lights on or off, or trigger scenes and scripts.
 TODO: Emit subscribe twitch events to Home Assistant's Event API
+TODO: Be able to fetch device states from Home Assistant
 [extension_version]
 0.3
-[extension_download]
-https://github.com/PrimusNZ/SAMMI-HomeAssistant
 [insert_external]
 <b>Home Assistant Extension for interfacing with Home Assistant</b>
 <b>Extension Developer</b><p>
