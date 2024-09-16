@@ -1,0 +1,89 @@
+[extension_name]
+Home Assistant
+[extension_info]
+Allows SAMMI to interface with Home Assistant to run scripts, turn switches and lights on or off, or trigger scenes.
+Emits twitch events to Home Assistants Event API
+[extension_version]
+0.1
+[insert_external]
+<b>HA</b>
+[insert_command]
+SAMMI.extCommand('Home Assistant INIT', 3355443, 52, {
+  haURL: ['Home Assistant URL', 14, 'http://example.com:8123/'],
+  accessToken: ['Access Token', 34, ''],
+})
+
+SAMMI.extCommand('Home Assistant Action', 3355443, 52, {
+  domain: ['Domain', 19, 'light', null, ['light', 'switch', 'input_boolean']],
+  action: ['Action', 19, 'toggle', null, ['toggle','turn_on','turn_off']],
+  entity_id: ['Entity ID', 14, 'stream_light']
+})
+
+SAMMI.extCommand('Home Assistant Run Script', 3355443, 52, {
+  entity_id: ['Entity ID', 14, 'close_all_blinds']
+})
+
+SAMMI.extCommand('Home Assistant Activate Scene', 3355443, 52, {
+  entity_id: ['Entity ID', 14, 'stream_lighting']
+})
+
+HomeAssistant();
+[insert_hook]
+[insert_script]
+function HomeAssistant() {
+  let ha_url;
+  let headers;
+
+  function checkInit() {
+    if (!ha_url) {
+        SAMMI.alert("No valid home assistant URL set - Did you run Home Assistant INIT ?");
+        return false;
+    };
+    if (!headers) {
+        SAMMI.alert("No valid access token set - Did you run Home Assistant INIT ?");
+        return false;
+    };
+    return true;
+  }
+
+  function haRequest(domain, action, entity_id){
+    if (!checkInit()) { return; };
+    const body = {
+      'entity_id': `${domain}.${entity_id}`
+    };
+    const requestURL = `${ha_url}/api/services/${domain}/${action}`
+ 
+    SAMMI.httpRequest(requestURL, "POST", headers, body)
+    .then(response => {
+        const data = JSON.parse(response.Value)
+        console.log(data)
+    });
+  }
+
+  sammiclient.on('Home Assistant INIT', async (json) => {
+      const data = json.Data;
+      ha_url = data.haURL;
+      headers = {
+        'Authorization': `Bearer ${data.accessToken}`,
+        'Content-Type': 'application/json',
+      };
+      SAMMI.alert("Home Assistant Initialized");
+  });
+
+  sammiclient.on('Home Assistant Action', async(json) => {
+      const data = json.Data;
+      haRequest(data.domain, data.action, data.entity_id);
+  });
+
+  sammiclient.on('Home Assistant Run Script', async(json) => {
+      const data = json.Data;
+      haRequest("script", "turn_on", data.entity_id);
+  });
+
+  sammiclient.on('Home Assistant Activate Scene', async(json) => {
+      const data = json.Data;
+      haRequest("scene", "turn_on", data.entity_id);
+  });
+}
+[insert_over]
+{ "deck_data": "{ \"background_color\": 4210752.0, \"on\": true, \"grid_y\": 3.0, \"snap_grid\": 1.0, \"lb_version\": \"2024.3.0\", \"background_image\": \"\", \"sammi_version\": \"2024.3.0\", \"encrypted\": false, \"adaptive_resizing\": 1.0, \"unique_id\": \"20240916164000672424810\", \"button_list\": [ { \"color\": 49166.0, \"persistent\": 1.0, \"text\": \"Home Assistant Integration\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ ], \"press_type\": 0.0, \"x\": 0.0, \"is_transparent\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 1.0, \"button_id\": \"ID8\", \"button_duration\": 0.0, \"y\": 0.0, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 64.0, \"stretch\": 0.0 }, { \"color\": 12632256.0, \"persistent\": 1.0, \"text\": \"HA Init\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"cmd\": 6.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 60.0, \"b0\": \"To use this extension, you must first generate a Long-lived Access Token.\\nOnce you have your token, initialize the extension by calling\\n'Home Assistant INIT' with the URL to your Home Assistant instance\\nusing the token you generated.\\n\\n\", \"v0\": 1.0 }, { \"haURL\": \"http:\\\/\\\/example.com:8123\\\/\", \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 1.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant INIT\", \"accessToken\": \"\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.40000000000000002220446049250313, \"is_transparent\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ { \"group_id\": \"\", \"type\": \"SAMMI Bridge Connected\", \"button_id\": \"ID9\", \"trg\": 10.0 } ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID9\", \"button_duration\": 0.0, \"y\": 0.33333333333333337034076748750522, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 81.0, \"stretch\": 0.0 }, { \"color\": 55772.0, \"persistent\": true, \"text\": \"Light\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"action\": \"toggle\", \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant Action\", \"entity_id\": \"stream_light\", \"domain\": \"light\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.0, \"is_transparent\": false, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID10\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false }, { \"color\": 14419200.0, \"persistent\": true, \"text\": \"Switch\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"action\": \"toggle\", \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant Action\", \"entity_id\": \"stream_pc\", \"domain\": \"switch\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.20000000000000001110223024625157, \"is_transparent\": false, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID11\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false }, { \"color\": 30684.0, \"persistent\": true, \"text\": \"Input\\nBoolean\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"action\": \"toggle\", \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant Action\", \"entity_id\": \"is_streaming\", \"domain\": \"input_boolean\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.40000000000000002220446049250313, \"is_transparent\": false, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID12\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false }, { \"color\": 14418132.0, \"persistent\": true, \"text\": \"Activate\\nScene\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant Activate Scene\", \"entity_id\": \"stream_lighting\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.59999999999999997779553950749687, \"is_transparent\": false, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID13\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false }, { \"color\": 220.0, \"persistent\": true, \"text\": \"Run\\nScript\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"Home Assistant Run Script\", \"entity_id\": \"close_all_blinds\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.80000000000000004440892098500626, \"is_transparent\": false, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.20000000000000001110223024625157, \"button_id\": \"ID14\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.33333333333333337034076748750522, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false } ], \"deck_name\": \"Home Assistant\", \"grid_x\": 5.0, \"stretch\": 0.0 }", "unique_id": "20240916164000672424810", "include_image": { } }
