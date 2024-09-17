@@ -3,9 +3,8 @@ Home Assistant
 [extension_info]
 Allows SAMMI to interface with Home Assistant to turn switches and lights on or off, or trigger scenes and scripts.
 TODO: Emit subscribe twitch events to Home Assistant's Event API
-TODO: Be able to fetch device states from Home Assistant
 [extension_version]
-0.3
+0.4
 [insert_external]
 <b>Home Assistant Extension for interfacing with Home Assistant</b>
 <b>Extension Developer</b><p>
@@ -46,6 +45,11 @@ SAMMI.extCommand('Home Assistant Run Script', 3355443, 52, {
 
 SAMMI.extCommand('Home Assistant Activate Scene', 3355443, 52, {
   entity_id: ['Entity ID', 14, 'stream_lighting']
+})
+
+SAMMI.extCommand('Home Assistant Get State', 3355443, 52, {
+  entity_id: ['Entity ID', 14, 'light.stream_light'],
+  saveVariable: ['Save Variable', 14, '']
 })
 
 HomeAssistant();
@@ -113,6 +117,21 @@ function HomeAssistant() {
   sammiclient.on('Home Assistant Activate Scene', async(json) => {
       const data = json.Data;
       haRequest("scene", "turn_on", data.entity_id);
+  });
+
+  sammiclient.on('Home Assistant Get State', async(json) => {
+      const data = json.Data;
+      if (!checkInit()) { return; };
+
+      const requestURL = `${ha_url}/api/states/${data.entity_id}`
+  
+      SAMMI.httpRequest(requestURL, "GET", headers)
+      .then(response => {
+          const raw_data = JSON.parse(response.Value)
+          const response_data = JSON.parse(raw_data.response)
+          console.log(raw_data)
+          SAMMI.setVariable(data.saveVariable, response_data.state, data.FromButton, data.instanceId);
+      });
   });
 }
 [insert_over]
